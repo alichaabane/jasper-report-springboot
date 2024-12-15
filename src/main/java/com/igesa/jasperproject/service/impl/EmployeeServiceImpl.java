@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
 import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,28 +41,31 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public String exportReport(String reportFormat) throws FileNotFoundException, JRException {
-        String path = "C:\\Users\\mss-g\\OneDrive\\Bureau\\reports";
+        String path = reportPath;
         List<Employee> employees = employeeRepository.findAll();
 
         // Load and compile the JRXML file
         File file = ResourceUtils.getFile("classpath:reports/employees.jrxml");
-        System.out.println("Loading file: " + file.getAbsolutePath());
         InputStream reportStream = new FileInputStream(file);
         JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
 
         // Create DataSource
         JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(employees);
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("createdBy", "Java Techie");
+        parameters.put("createdBy", "Ali");
 
         // Fill report
         JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
 
         // Export report
-        if (reportFormat.equalsIgnoreCase("html")) {
-            JasperExportManager.exportReportToHtmlFile(jasperPrint, path + "\\employees.html");
-        } else if (reportFormat.equalsIgnoreCase("pdf")) {
-            JasperExportManager.exportReportToPdfFile(jasperPrint, path + "\\employees.pdf");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
+
+        if ("html".equalsIgnoreCase(reportFormat)) {
+            String timestamp = LocalDateTime.now().format(formatter);
+            JasperExportManager.exportReportToHtmlFile(jasperPrint, path + "\\employees_" + timestamp + ".html");
+        } else if ("pdf".equalsIgnoreCase(reportFormat)) {
+            String timestamp = LocalDateTime.now().format(formatter);
+            JasperExportManager.exportReportToPdfFile(jasperPrint, path + "\\employees_" + timestamp + ".pdf");
         }
 
         return "Report generated in path: " + path;
